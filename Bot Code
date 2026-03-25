@@ -1,1 +1,80 @@
+import discord
+from discord import app_commands
+import json
 
+from datetime import timedelta
+intents = discord.Intents.all()
+
+
+
+intents = discord.Intents.all()
+discordBot = discord.Client(intents=intents)
+discordBot.tree = app_commands.CommandTree(discordBot)
+
+@discordBot.event
+async def on_ready():
+
+
+
+        await discordBot.tree.sync()
+        print("Bot is starting")
+
+
+@discordBot.tree.command(
+    name="say",
+    description="Lässt den Bot deine Nachricht wiederholen"
+)
+@app_commands.describe(text="Der Text, den der Bot senden soll")
+@app_commands.checks.has_permissions(administrator=True)
+async def say(interaction: discord.Interaction, text: str):
+    await interaction.response.send_message(text, ephemeral=False)
+
+@discordBot.tree.command(
+    name="send_embed",
+    description="Sendet einen Embed mit allen Optionen"
+)
+@app_commands.describe(
+    title="Titel des Embeds",
+    description="Beschreibung des Embeds",
+    color="Farbe in Hex (z.B. #ff0000)",
+    image_url="URL für ein Bild",
+    author="Name des Autors für Footer",
+    show_timestamp="Zeitstempel im Footer anzeigen",
+)
+async def send_embed(
+    interaction: discord.Interaction,
+    title: str,
+    description: str,
+    color: str = None,
+    image_url: str = None,
+    author: str = None,
+    show_timestamp: bool = False
+):
+
+    try:
+        embed_color = int(color.lstrip("#"),16) if color else 0xFF0000
+    except:
+        embed_color = 0xFF0000
+
+    embed = discord.Embed(
+        title=title,
+        description=description,
+        color=embed_color
+    )
+   if image_url:
+        embed.set_image(url=image_url)
+
+    footer_text = ""
+    if author:
+        footer_text += f"{author}"
+    if show_timestamp:
+        if footer_text:
+            footer_text += " | "
+footer_text += "⏱ {:%d.%m.%Y %H:%M}".format(interaction.created_at)
+
+if footer_text:
+        embed.set_footer(text=footer_text)
+
+    await interaction.response.send_message(embed=embed)
+
+discordBot.run("")
