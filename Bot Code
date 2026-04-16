@@ -66,4 +66,169 @@ async def send_embed(
     await interaction.response.send_message(embed=embed)
 
 
-discordBot.run("")
+discordBot.run("")	
+const {
+  Client,
+  GatewayIntentBits,
+  Partials,
+  ActionRowBuilder,
+  ButtonBuilder,
+  ButtonStyle,
+  ChannelType,
+  PermissionsBitField
+} = require("discord.js");
+
+const client = new Client({
+  intents: [GatewayIntentBits.Guilds, GatewayIntentBits.GuildMessages, GatewayIntentBits.MessageContent],
+  partials: [Partials.Channel]
+});
+
+const TOKEN = "DEIN_BOT_TOKEN"; // HIER TOKEN REIN
+
+// 📌 Bot ready
+client.once("ready", () => {
+  console.log(`Eingeloggt als ${client.user.tag}`);
+});
+
+
+// 📌 !ticket Command (Button senden)
+client.on("messageCreate", async (message) => {
+  if (message.content === "!ticket") {
+
+    const row = new ActionRowBuilder().addComponents(
+      new ButtonBuilder()
+        .setCustomId("create_ticket")
+        .setLabel("🎫 Ticket erstellen")
+        .setStyle(ButtonStyle.Primary)
+    );
+
+    message.channel.send({
+      content: "Klicke auf den Button, um ein Ticket zu erstellen!",
+      components: [row]
+    });
+  }
+});
+
+
+// 📌 Button → Ticket erstellen
+client.on("interactionCreate", async (interaction) => {
+  if (!interaction.isButton()) return;
+
+  if (interaction.customId === "create_ticket") {
+
+    const channel = await interaction.guild.channels.create({
+      name: `ticket-${interaction.user.username}`,
+      type: ChannelType.GuildText,
+      permissionOverwrites: [
+        {
+          id: interaction.guild.id,
+          deny: [PermissionsBitField.Flags.ViewChannel],
+        },
+        {
+          id: interaction.user.id,
+          allow: [
+            PermissionsBitField.Flags.ViewChannel,
+            PermissionsBitField.Flags.SendMessages
+          ],
+        },
+      ],
+    });
+
+    await channel.send(`👋 Hallo ${interaction.user}, beschreibe dein Problem!`);
+    await interaction.reply({ content: `✅ Ticket erstellt: ${channel}`, ephemeral: true });
+  }
+});
+
+
+// 📌 !close → Ticket schließen
+client.on("messageCreate", async (message) => {
+  if (message.content === "!close") {
+
+    if (!message.channel.name.startsWith("ticket-")) {
+      return message.reply("❌ Das ist kein Ticket!");
+    }
+
+    message.channel.send("🔒 Ticket wird geschlossen...");
+
+    setTimeout(() => {
+      message.channel.delete();
+    }, 3000);
+  }
+});
+
+
+// 📌 !add @user → User hinzufügen
+client.on("messageCreate", async (message) => {
+  if (message.content.startsWith("!add")) {
+
+    const user = message.mentions.users.first();
+    if (!user) return message.reply("❌ Bitte erwähne einen User!");
+
+    if (!message.channel.name.startsWith("ticket-")) {
+      return message.reply("❌ Das ist kein Ticket!");
+    }
+
+    await message.channel.permissionOverwrites.edit(user.id, {
+      ViewChannel: true,
+      SendMessages: true,
+      ReadMessageHistory: true
+    });
+
+    message.channel.send(`➕ ${user} wurde hinzugefügt!`);
+  }
+});
+
+
+// 📌 !remove @user → User entfernen
+client.on("messageCreate", async (message) => {
+  if (message.content.startsWith("!remove")) {
+
+    const user = message.mentions.users.first();
+    if (!user) return message.reply("❌ Bitte erwähne einen User!");
+
+    if (!message.channel.name.startsWith("ticket-")) {
+      return message.reply("❌ Das ist kein Ticket!");
+    }
+
+    await message.channel.permissionOverwrites.delete(user.id);
+
+    message.channel.send(`➖ ${user} wurde entfernt!`);
+  }
+});
+
+
+// 📌 !claim → Ticket übernehmen
+client.on("messageCreate", async (message) => {
+  if (message.content === "!claim") {
+
+    if (!message.member.permissions.has(PermissionsBitField.Flags.ManageMessages)) {
+      return message.reply("❌ Keine Rechte!");
+    }
+
+    if (!message.channel.name.startsWith("ticket-")) {
+      return message.reply("❌ Das ist kein Ticket!");
+    }
+
+    message.channel.send(`✅ ${message.author} hat das Ticket übernommen!`);
+  }
+});
+
+
+// 📌 !rename neuer-name
+client.on("messageCreate", async (message) => {
+  if (message.content.startsWith("!rename")) {
+
+    const name = message.content.split(" ").slice(1).join("-");
+    if (!name) return message.reply("❌ Gib einen Namen ein!");
+
+    if (!message.channel.name.startsWith("ticket-")) {
+      return message.reply("❌ Das ist kein Ticket!");
+    }
+
+    message.channel.setName(`ticket-${name}`);
+    message.channel.send("✏️ Ticket wurde umbenannt!");
+  }
+});
+
+
+client.login(TOKEN); 
