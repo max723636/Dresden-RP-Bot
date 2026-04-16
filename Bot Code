@@ -66,4 +66,4 @@ async def send_embed(
     await interaction.response.send_message(embed=embed)
 
 
-discordBot.run("YOUR_TOKEN_HERE")
+discordBot.run("")
