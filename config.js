@@ -1,0 +1,1 @@
+TOKEN = Dein Discord Toke
